@@ -32,9 +32,15 @@ class Receiver:
         
         # Simulates a target's signal at the receiver based on waveform and channel.
 
-        delaySamples = int(
-            path["delay"] * self.fs
-        )
+        delaySamples = path["delay"] * self.fs
+
+        integerDelay = int(delaySamples)
+
+        fractionalDelay = delaySamples - integerDelay
+
+        delayPhase = np.exp(
+            -1j * 2*np.pi * waveform.fc * path["delay"]
+)
 
         echo = (
             waveform.signal
@@ -42,11 +48,16 @@ class Receiver:
             path["amplitude"]
             *
             np.exp(1j * path["phase"])
+            * delayPhase
         )
 
-        start = delaySamples
-        end = start + len(echo)
+        start = integerDelay
 
-        if end <= len(buffer):
-            buffer[start:end] += echo
+        buffer[start:start+len(echo)] += (
+            echo * (1 - fractionalDelay)
+        )
+
+        buffer[start+1:start+len(echo)+1] += (
+            echo * fractionalDelay
+        )
             
