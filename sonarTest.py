@@ -35,6 +35,8 @@ rec = Receiver(1e6, 100, soundSpeed=1500)
 
 rawData = []
 
+rx = rec.createBuffer()
+
 for position in platform.positions:
 
     path = channel.propagationPath(
@@ -42,8 +44,6 @@ for position in platform.positions:
         target,
         sonar.carrierFrequency
     )
-
-    rx = rec.createBuffer()
 
     rec.addEcho(
         rx,
