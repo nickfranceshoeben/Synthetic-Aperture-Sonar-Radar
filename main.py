@@ -5,6 +5,13 @@ from environment import Environment
 from waveform import Waveform
 
 
+env = Environment()
+
+env.addTarget(0,50)
+env.save('simpleBackprojEnvironment.json')
+
+
+
 '''Waveform tests:
 
 waveform = Waveform(

@@ -7,13 +7,12 @@ from receiver import Receiver
 from channel import Channel
 from sonarPlatform import Platform
 from chirpMatcher import matchedFilter
+from backprojection import createImageGrid, calculateRanges, calculateAllRanges, rangesToSampleIndices, retrieveSamples, backproject
 
-target = {
-    "x": 0,
-    "y": 50,
-    "reflectivity": 1.0
-}
-
+targets = [
+    {"x": 0, "y": 50, "reflectivity": 1.0},
+    {"x": 0, "y": 50.35, "reflectivity": 1.0}
+]
 channel = Channel()
 
 platform = Platform(
@@ -29,30 +28,81 @@ sonar = Sonar(
     lookAngle=np.pi/2
 )
 
-wf = Waveform(100e3, 20e3, 1e-3,1e6)
+wf = Waveform(10e3, 20e3, 1e-3,100e3)
 
-rec = Receiver(1e6, 100, soundSpeed=1500)
+rec = Receiver(100e3, 100, soundSpeed=1500)
 
 rawData = []
 
-rx = rec.createBuffer()
 
 for position in platform.positions:
+    
+    rx = rec.createBuffer()
+    
+    for target in targets:
+        path = channel.propagationPath(
+            position,
+            target,
+            sonar.carrierFrequency
+        )
 
-    path = channel.propagationPath(
-        position,
-        target,
-        sonar.carrierFrequency
-    )
-
-    rec.addEcho(
-        rx,
-        wf,
-        path
-    )
+        rec.addEcho(
+            rx,
+            wf,
+            path
+        )
+        
 
     compressed = matchedFilter(rx, wf)
-    rawData.append(compressed)
+    rawData.append(compressed)    
+    peakIndex = np.argmax(np.abs(compressed))
+    
+rawData = np.array(rawData)
+    
+X, Y = createImageGrid(
+    xBounds=(-50, 50),
+    yBounds=(0, 100),
+    xPixels=801,
+    yPixels=801
+)
+
+ranges = calculateAllRanges(X, Y, platform.positions)
+
+sampleIndices = rangesToSampleIndices(ranges,rec.fs,channel.c, len(wf.signal))
+
+samples = retrieveSamples(rawData, sampleIndices)
+
+image = backproject(
+    samples,
+    ranges,
+    sonar.carrierFrequency,
+    channel.c
+)
+
+print(ranges.shape)
+print(sampleIndices.shape)
+print(samples.shape)
+
+plt.figure(figsize=(10, 8))
+
+plt.imshow(
+    np.abs(image),
+    extent=[X.min(), X.max(), Y.min(), Y.max()],
+    origin="lower",
+    aspect="auto",
+    cmap="viridis"
+)
+
+plt.scatter(0, 50, color="red", marker="x", label="Actual target")
+
+plt.xlabel("Along-track position x (m)")
+plt.ylabel("Across-track position y (m)")
+plt.title("Synthetic Aperture Sonar — Backprojection")
+plt.colorbar(label="Magnitude")
+plt.legend()
+plt.show()
+    
+'''
 
 
 
@@ -70,6 +120,7 @@ plt.plot(peakHistory)
 plt.grid()
 plt.show()
 phase_history = []
+'''
 
 '''
 for position in platform.positions:
@@ -84,6 +135,7 @@ for position in platform.positions:
 
 '''
 
+'''
 phase_history = []
 
 for position, compressed in zip(
@@ -104,6 +156,8 @@ for position, compressed in zip(
     phase_history.append(
         np.angle(np.sum(window))
     )
+    
+'''
 '''
 for ping in rawData:
 
@@ -120,7 +174,7 @@ for ping in rawData:
     '''
 
 
-phase_change = np.diff(phase_history)
+'''phase_change = np.diff(phase_history)
 
 plt.plot(phase_change)
 plt.grid()
@@ -134,4 +188,4 @@ plt.plot(relative_phase)
 plt.xlabel("Ping number")
 plt.ylabel("Phase (rad)")
 plt.grid()
-plt.show()
+plt.show()'''
