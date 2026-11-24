@@ -19,12 +19,19 @@ class Channel:
         
         return 2*R/self.c
     
-    def angle(self, platformPosition, target):
+    def angle(self, platformPosition, target, heading):
         # Measures angle between the positive y-axis and the target.
         dx = target["x"] - platformPosition[0]
         dy = target["y"] - platformPosition[1]
 
-        return np.arctan2(dx, dy)
+        targetAngle = np.arctan2(dy, dx)
+
+        angleDifference = targetAngle - heading
+
+        return np.arctan2(
+            np.sin(angleDifference),
+            np.cos(angleDifference)
+        )
     
     def beamGain(self, theta, exponent=8):
         # Simple beam, quite narrow at exponent 8
@@ -45,13 +52,14 @@ class Channel:
     self,
     platformPosition,
     target,
-    carrierFrequency):
+    carrierFrequency,
+    heading):
         
         # Returns a dict with all relevant channel variables
         
         R = self.range(platformPosition,target)
         delay = self.delay(R)
-        angle = self.angle(platformPosition, target)
+        angle = self.angle(platformPosition, target, heading)
         gain = self.beamGain(angle)
         loss = self.spreadingLoss(R)
         phase = self.phase(R, carrierFrequency)
