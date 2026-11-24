@@ -5,10 +5,10 @@ from environment import Environment
 from waveform import Waveform
 
 
-env = Environment()
+env = Environment(0.05)
 
 env.plot(np.array([0,50]),np.array([-50,10]))
-env.save('complexSeafloor.json')
+env.save('moreComplexSeafloor.json')
 
 
 

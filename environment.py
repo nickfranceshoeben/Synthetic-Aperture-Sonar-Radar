@@ -7,7 +7,7 @@ import json
 
 class Environment:
     
-    def __init__(self, gridSize):
+    def __init__(self, gridSize=0.5):
         
         self.targets = []
         
