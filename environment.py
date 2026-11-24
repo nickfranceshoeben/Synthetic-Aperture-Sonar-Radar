@@ -7,13 +7,13 @@ import json
 
 class Environment:
     
-    def __init__(self):
+    def __init__(self, gridSize):
         
         self.targets = []
         
         # Snap-to-grid settings
         self.snapEnabled = True
-        self.gridSize = 0.5   # meters
+        self.gridSize = gridSize   # meters
         
     def addTarget(self, x, y, refl=1.0):
         #Add simple point scatterer
