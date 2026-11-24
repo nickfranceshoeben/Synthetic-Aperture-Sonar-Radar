@@ -7,8 +7,8 @@ from waveform import Waveform
 
 env = Environment()
 
-env.addTarget(0,50)
-env.save('simpleBackprojEnvironment.json')
+env.plot(np.array([0,50]),np.array([-50,10]))
+env.save('complexSeafloor.json')
 
 
 

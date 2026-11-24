@@ -13,14 +13,14 @@ class Environment:
         
         # Snap-to-grid settings
         self.snapEnabled = True
-        self.gridSize = 0.1   # meters
+        self.gridSize = 0.5   # meters
         
     def addTarget(self, x, y, refl=1.0):
         #Add simple point scatterer
         self.targets.append({
             "x":x,
             "y":y,
-            "refl":refl
+            "reflectivity":refl
         })
         
         return
@@ -35,30 +35,29 @@ class Environment:
 
         return x, y
         
-    def plot(self):
+    def plot(self, xDims, yDims):
         #Plot function
         
         self.fig, self.ax = plt.subplots(figsize=(8, 8))
         
         self.ax.set_title('Add point by clicking. Press "s" to save environment.')
         self.ax.set_xlabel(f'Snap-to-grid: {self.snapEnabled}')
+        self.ax.set_xlim(xDims[0], xDims[1])
+        self.ax.set_ylim(yDims[0], yDims[1])
+        self.ax.set_aspect("equal")
+        self.ax.grid(True)
         
-
-        if self.targets:
-            x = [t["x"] for t in self.targets]
-            y = [t["y"] for t in self.targets]
-            self.scatter = self.ax.scatter(x, y, color="red")
-            self.ax.set_xlim(0, 10)
-            self.ax.set_ylim(0, 10)
-            self.ax.set_aspect("equal")
-            self.ax.grid(True)
+        x = [t["x"] for t in self.targets]
+        y = [t["y"] for t in self.targets]
+        self.scatter = self.ax.scatter(x, y, color="red")
+            
             
         self.ax.set_xticks(
-            np.arange(0, 10+self.gridSize, self.gridSize)
+            np.arange(xDims[0], xDims[1]+self.gridSize, self.gridSize)
         )
 
         self.ax.set_yticks(
-            np.arange(0, 10+self.gridSize, self.gridSize)
+            np.arange(yDims[0], yDims[1]+self.gridSize, self.gridSize)
         )
         
         self.ax.tick_params(
