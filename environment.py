@@ -15,6 +15,12 @@ class Environment:
         self.snapEnabled = True
         self.gridSize = gridSize   # meters
         
+        #For draw mode
+        self.drawing = False
+        self.lastPoint = None
+        self.brushSpacing = 0.02
+        self.method = 'line'
+        
     def addTarget(self, x, y, refl=1.0):
         #Add simple point scatterer
         self.targets.append({
@@ -35,7 +41,7 @@ class Environment:
 
         return x, y
         
-    def plot(self, xDims, yDims):
+    def plot(self, xDims, yDims, method='line'):
         #Plot function
         
         self.fig, self.ax = plt.subplots(figsize=(8, 8))
@@ -75,6 +81,11 @@ class Environment:
         )
         
         self.fig.canvas.mpl_connect(
+            "motion_notify_event",
+            self.onMove
+        )
+        
+        self.fig.canvas.mpl_connect(
             "key_press_event",
             self.onKey
         )
@@ -96,30 +107,90 @@ class Environment:
             self.updatePlot()
         
     def onClick(self, event):
+        
         # Function for what happens when you click
-        if event.inaxes is None:
-            return
+        if self.method=='dot':
         
-         # Snap mouse location
-        x, y = self.snapPoint(
-            event.xdata,
-            event.ydata
-        )
+            if event.inaxes is None:
+                return
+            
+            # Snap mouse location
+            x, y = self.snapPoint(
+                event.xdata,
+                event.ydata
+            )
 
-        # Add point to clicked area
-        if self.pointExists(x, y):
-            print("Point already exists")
-            return
+            # Add point to clicked area
+            if self.pointExists(x, y):
+                print("Point already exists")
+                return
 
-        self.targets.append({
-            "x": x,
-            "y": y,
-            "reflectivity": 1.0
-        })
-        
-        self.updatePlot()
+            self.targets.append({
+                "x": x,
+                "y": y,
+                "reflectivity": 1.0
+            })
+            
+            self.updatePlot()
+            
+        elif self.method=='line':
+            
+            if event.inaxes is None:
+                return
+            
+            self.drawing = not self.drawing
+
+            if self.drawing:
+                print("Drawing enabled")
+                self.lastPoint = (event.xdata, event.ydata)
+                self.paintStroke(event.xdata, event.ydata)
+
+            else:
+                print("Drawing disabled")
+                self.lastPoint = None
+                self.updatePlot()
+                
+            
 
         #print(f'Added target: {self.targets[-1]}')
+    
+    def onMove(self,event):
+        # Function for what happens when the mouse moves
+        
+        if not self.drawing or event.inaxes != self.ax:
+            return
+
+        self.paintStroke(event.xdata, event.ydata)
+        
+    def paintStroke(self, x, y):
+
+        if self.lastPoint is None:
+            self.lastPoint = (x, y)
+            return
+
+        x0, y0 = self.lastPoint
+
+        distance = np.hypot(x - x0, y - y0)
+
+        if distance < self.brushSpacing:
+            return
+
+        steps = int(distance / self.brushSpacing)
+
+        for i in range(1, steps + 1):
+
+            t = i / steps
+
+            px = x0 + t * (x - x0)
+            py = y0 + t * (y - y0)
+
+            self.targets.append({
+                "x": px,
+                "y": py,
+                "reflectivity": 1.0
+            })
+
+        self.lastPoint = (x, y)
         
     def undoLast(self):
 
